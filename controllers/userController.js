@@ -1,7 +1,16 @@
 const Menu = require('../models/menu'); // Import the Menu model
 const Order = require('../models/order');
 const Address = require('../models/address'); 
+const axios = require('axios');
+const path = require("path");
+const Media = require("../models/media");
+const { generateHash } = require('../utils/phonePeHash');
 const { Op } = require('sequelize');
+require('dotenv').config();
+
+const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL;
+const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
+const CALLBACK_URL = process.env.CALLBACK_URL;
 
 // Get menus for current, next, and next to next date
 exports.getMenus = async (req, res) => {
@@ -166,3 +175,100 @@ exports.getOrderDetailsByMobile = async (req, res) => {
   }
 };
 
+// Initialize Payment
+exports.initiatePayment = async (req, res) => {
+  const { orderId, amount, mobileNumber } = req.body;
+
+  const paymentData = {
+    merchantId: MERCHANT_ID,
+    merchantTransactionId: `ORDER_${orderId}_${Date.now()}`,  // Unique transaction ID
+    merchantUserId: mobileNumber,
+    amount: amount * 100,  // Convert to paise
+    // redirectUrl: CALLBACK_URL,
+    // callbackUrl: CALLBACK_URL,
+    paymentInstrument: {
+      type: 'PAY_PAGE',
+    }
+  };
+
+  const requestBody = JSON.stringify(paymentData);
+  const hash = generateHash(requestBody);
+
+  try {
+    const response = await axios.post(`${PHONEPE_BASE_URL}/pg/v1/pay`, paymentData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-VERIFY': `${hash}###${process.env.PHONEPE_SALT_KEY_INDEX}`
+      }
+    });
+
+    if (response.data.success) {
+      return res.status(200).json({
+        message: 'Payment initiated successfully',
+        data: response.data.data.instrumentResponse.redirectUrl
+      });
+    } else {
+      return res.status(400).json({ message: 'Payment initiation failed', data: response.data });
+    }
+  } catch (error) {
+    console.error('Payment initiation error:', error);
+    return res.status(500).json({ error: 'Payment initiation failed' });
+  }
+};
+
+// Check Payment Status
+exports.checkPaymentStatus = async (req, res) => {
+  const { transactionId, paymentId } = req.body;
+
+  const hash = generateHash(transactionId);
+
+  try {
+    const response = await axios.get(`${PHONEPE_BASE_URL}/pg/v1/status/${MERCHANT_ID}/${transactionId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-VERIFY': `${hash}###${process.env.PHONEPE_SALT_KEY_INDEX}`
+      }
+    });
+
+    return res.status(200).json({ message: 'Payment status retrieved', data: response.data });
+  } catch (error) {
+    console.error('Payment status check error:', error);
+    return res.status(500).json({ error: 'Payment status check failed' });
+  }
+};
+
+// Upload Image and Save URL in Database
+exports.uploadImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    // Construct the file URL
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+
+    // Save file URL in Media table
+    const media = await Media.create({ file_url: fileUrl });
+
+    return res.status(201).json({
+      message: "File uploaded successfully",
+      fileLink: media.file_url,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to upload image" });
+  }
+};
+
+// Get all media records in descending order by creation date
+exports.getAllMedia = async (req, res) => {
+  try {
+    const mediaRecords = await Media.findAll({
+      order: [["createdAt", "DESC"]],
+    });
+    return res.status(200).json(mediaRecords);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to retrieve media records" });
+  }
+};
