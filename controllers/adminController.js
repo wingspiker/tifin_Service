@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const Menu = require('../models/Menu');
-const Order = require('../models/Order');
+const Menu = require('../models/menu');
+const Order = require('../models/order');
 const moment = require('moment');
 const { Op } = require('sequelize');
 const DeliveryBoy = require('../models/delivery_boy');
@@ -311,7 +311,7 @@ exports.getOrdersByDateAndShift = async (req, res) => {
         id: order.id,
         address,
         mobile_no: order.mobile_no,
-        orderDate: order.orderDate,
+        orderDate: order.createdAt,
         status: order.status,
         shift: order.shift,
         menus: menuItems,
