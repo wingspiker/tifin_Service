@@ -269,7 +269,7 @@ exports.getOrdersByDateAndShift = async (req, res) => {
     // Define query criteria
     const orderQuery = {
       where: {
-        orderDate: date,
+        createdAt: date,
         shift: shift,
         payment_status: 'done'
       },

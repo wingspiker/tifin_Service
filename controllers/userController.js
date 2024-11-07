@@ -65,6 +65,7 @@ exports.addOrder = async (req, res) => {
 
     // Initialize total amount
     let totalAmount = 0;
+    let shift = "";
 
     // Fetch menu details for each menu_id
     const menuDetailsPromises = menus.map(async (menu) => {
@@ -74,6 +75,12 @@ exports.addOrder = async (req, res) => {
       }
       const itemTotal = menuItem.price * menu.quantity; // Calculate total for this menu item
       totalAmount += itemTotal; // Add to total amount
+
+      if(shift == ""){
+        shift = menuItem.shift
+      }else if(shift != menuItem.shift){
+        throw new Error("All added menu should be belongs to same shift.")
+      }
 
       return {
         ...menuItem.toJSON(),

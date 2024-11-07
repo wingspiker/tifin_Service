@@ -22,6 +22,10 @@ const Order = sequelize.define('Order', {
     allowNull: false,
     defaultValue: 'pending',
   },
+  shift: {
+    type: DataTypes.ENUM('lunch', 'dinner'),
+    allowNull: false,
+  },
   mobile_no: {
     type: DataTypes.STRING,
     allowNull: false,
