@@ -4,9 +4,11 @@ const adminRoutes = require('./routes/adminRoutes');
 const deliveryBoyRoutes = require('./routes/deliveryBoyRoutes');
 const userRoutes = require('./routes/userRoutes');
 const path = require("path");
+const cors = require('cors');
 require('./config/index');  // Initialize database connection
 require('./config/db');
 
+app.use(cors())
 // Middlewares
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
