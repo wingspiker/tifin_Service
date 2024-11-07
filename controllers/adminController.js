@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Menu = require('../models/menu');
 const Order = require('../models/order');
+const Address = require('../models/address');
 const moment = require('moment');
 const { Op } = require('sequelize');
 const DeliveryBoy = require('../models/delivery_boy');
@@ -64,11 +65,11 @@ exports.editMenu = async (req, res) => {
   const updates = req.body;
 
   try {
-    const [updated] = await Menu.update(updates, {
+    const [, updated] = await Menu.update(updates, {
       where: { id },
       returning: true,
     });
-
+    
     if (updated) {
       const updatedMenu = await Menu.findByPk(id);
       return res.status(200).json({

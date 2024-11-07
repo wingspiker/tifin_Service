@@ -12,7 +12,7 @@ const Menu = sequelize.define('Menu', {
   },
   shift: {
     type: DataTypes.ENUM('Lunch', 'Dinner'),
-    allowNull: false,
+    allowNull: true,
   },
   variant: {
     type: DataTypes.ENUM('Full-Dish', 'Half-Dish'),

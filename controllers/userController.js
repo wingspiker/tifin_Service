@@ -53,16 +53,6 @@ exports.addOrder = async (req, res) => {
   const { address_id, mobile_no, menus, note } = req.body;
 
   try {
-    const newOrder = await Order.create({
-      address_id,
-      mobile_no,
-      menus, // This should be formatted correctly in your model
-      note: note || null, // note can be null if not provided
-      status: 'pending', // Default status if not provided
-      delivery_boy_id: null, // Default if not provided
-      payment_status: 'pending'
-    });
-
     // Initialize total amount
     let totalAmount = 0;
     let shift = "";
@@ -90,6 +80,17 @@ exports.addOrder = async (req, res) => {
 
     // Wait for all menu details to be fetched
     const detailedMenus = await Promise.all(menuDetailsPromises);
+
+    const newOrder = await Order.create({
+      address_id,
+      mobile_no,
+      shift,
+      menus, // This should be formatted correctly in your model
+      note: note || null, // note can be null if not provided
+      status: 'pending', // Default status if not provided
+      delivery_boy_id: null, // Default if not provided
+      payment_status: 'pending'
+    });
 
     // Construct response
     return res.status(200).json({
