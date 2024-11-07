@@ -6,6 +6,10 @@ const Menu = sequelize.define('Menu', {
     type: DataTypes.DATEONLY,
     allowNull: false,
   },
+  photo_url: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   isPublished: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,

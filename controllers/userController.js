@@ -33,7 +33,8 @@ exports.getMenus = async (req, res) => {
             nextNextDay.toISOString().split('T')[0] // Next to next date
           ]
         },
-        isPublished: true // Only return published menus
+        isPublished: true, // Only return published menus
+        status: "Available"
       },
       order: [['date', 'ASC']], // Order by date
     });

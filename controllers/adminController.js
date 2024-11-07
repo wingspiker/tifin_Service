@@ -43,6 +43,7 @@ exports.addMenus = async (req, res) => {
           menu_items,
           price,
           status,
+          photo_url,
           created_at: new Date(),
           updated_at: new Date(),
         });
