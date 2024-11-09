@@ -57,6 +57,7 @@ exports.addOrder = async (req, res) => {
     // Initialize total amount
     let totalAmount = 0;
     let shift = "";
+    let deliveryDate = "";
 
     // Fetch menu details for each menu_id
     const menuDetailsPromises = menus.map(async (menu) => {
@@ -73,6 +74,12 @@ exports.addOrder = async (req, res) => {
         throw new Error("All added menu should be belongs to same shift.")
       }
 
+      if(deliveryDate == ""){
+        deliveryDate = new Date(menuItem.date);
+      }else if(deliveryDate != menuItem.date){
+        throw new Error("All added menu should be belongs to same date.")
+      }
+
       return {
         ...menuItem.toJSON(),
         itemTotal, // Total price for this menu item
@@ -86,11 +93,12 @@ exports.addOrder = async (req, res) => {
       address_id,
       mobile_no,
       shift,
+      deliveryDate,
       menus, // This should be formatted correctly in your model
       note: note || null, // note can be null if not provided
       status: 'pending', // Default status if not provided
       delivery_boy_id: null, // Default if not provided
-      payment_status: 'pending'
+      payment_status: 'done'
     });
 
     // Construct response

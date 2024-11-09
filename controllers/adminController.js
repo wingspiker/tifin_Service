@@ -265,19 +265,52 @@ exports.getAllDeliveryBoys = async (req, res) => {
 };
 
 exports.getOrdersByDateAndShift = async (req, res) => {
-  const { date, shift, status, delivery_boy_id, page = 1, limit = 10 } = req.body;
+  const { orderdate, deliverydate, isorder, shift, status, delivery_boy_id, page = 1, limit = 10 } = req.body;
 
   try {
-    // Define query criteria
-    const orderQuery = {
-      where: {
-        createdAt: date,
-        shift: shift,
-        payment_status: 'done'
-      },
-      limit,                          // Limit number of records per page
-      offset: (page - 1) * limit      // Calculate offset for pagination
-    };
+    let orderQuery = {
+
+    }
+    if(isorder){
+      let reqDate = new Date(orderdate);
+      const nextDate = new Date(reqDate);
+      nextDate.setDate(reqDate.getDate() + 1);
+
+      orderQuery = {
+        where: {
+          createdAt: {
+            [Op.and]: [
+              { [Op.gte]: reqDate },
+              { [Op.lt]: nextDate },
+            ]
+          },
+          payment_status: 'done'
+        },
+        limit,                          // Limit number of records per page
+        offset: (page - 1) * limit      // Calculate offset for pagination
+      };
+
+    }else{
+      let reqDate = new Date(deliverydate);
+      const nextDate = new Date(reqDate);
+      nextDate.setDate(reqDate.getDate() + 1);
+
+      orderQuery = {
+        where: {
+          deliveryDate: {
+            [Op.and]: [
+              { [Op.gte]: reqDate },
+              { [Op.lt]: nextDate },
+            ]
+          },
+          shift: shift,
+          payment_status: 'done'
+        },
+        limit,                          // Limit number of records per page
+        offset: (page - 1) * limit      // Calculate offset for pagination
+      };
+    }
+    
 
     if (status) {
       orderQuery.where.status = status;
@@ -289,6 +322,8 @@ exports.getOrdersByDateAndShift = async (req, res) => {
 
     // Fetch paginated orders
     const { count, rows: orders } = await Order.findAndCountAll(orderQuery);
+    
+    console.log(count)
 
     if (orders.length === 0) {
       return res.status(404).json({ message: 'No orders found for the given date and shift.' });

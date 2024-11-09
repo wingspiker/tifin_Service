@@ -23,7 +23,11 @@ const Order = sequelize.define('Order', {
     defaultValue: 'pending',
   },
   shift: {
-    type: DataTypes.ENUM('lunch', 'dinner'),
+    type: DataTypes.ENUM('Lunch', 'Dinner'),
+    allowNull: false,
+  },
+  deliveryDate: {
+    type: DataTypes.DATE,
     allowNull: false,
   },
   mobile_no: {

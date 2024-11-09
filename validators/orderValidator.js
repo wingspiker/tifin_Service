@@ -22,16 +22,23 @@ exports.validateOrder = [
 ];
 
 exports.validateOrderFilter = [
-  check('date')
-    .exists()
-    .withMessage('Date is required')
+  check('orderdate')
+    .optional()
     .isISO8601()
     .withMessage('Date must be in YYYY-MM-DD format'),
 
-  check('shift')
+  check('deliverydate')
+    .optional()
+    .isISO8601()
+    .withMessage('Date must be in YYYY-MM-DD format'),
+
+  check('isorder')
     .exists()
-    .withMessage('Shift is required')
-    .isIn(['lunch', 'dinner'])
+    .withMessage('isOrder is required'),
+
+  check('shift')
+    .optional()
+    .isIn(['Lunch', 'Dinner'])
     .withMessage('Shift must be either "lunch" or "dinner"'),
 
   check('status')
@@ -86,7 +93,7 @@ exports.validateOrderQuery = [
     .withMessage('Date must be in YYYY-MM-DD format'),
 
   check('shift')
-    .isIn(['lunch', 'dinner'])
+    .isIn(['Lunch', 'Dinner'])
     .withMessage('Shift must be either lunch or dinner'),
 
   check('status')
