@@ -1,16 +1,18 @@
 const Menu = require('../models/menu'); // Import the Menu model
 const Order = require('../models/order');
-const Address = require('../models/address'); 
+const Address = require('../models/address');
+const Payment = require('../models/payment');
 const axios = require('axios');
-const path = require("path");
 const Media = require("../models/media");
-const { generateHash } = require('../utils/phonePeHash');
 const { Op } = require('sequelize');
+const cryptoJS = require('crypto-js');
+
 require('dotenv').config();
 
 const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL;
 const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
 const CALLBACK_URL = process.env.CALLBACK_URL;
+const saltKey = process.env.PHONEPE_SALT_KEY;
 
 // Get menus for current, next, and next to next date
 exports.getMenus = async (req, res) => {
@@ -98,7 +100,7 @@ exports.addOrder = async (req, res) => {
       note: note || null, // note can be null if not provided
       status: 'pending', // Default status if not provided
       delivery_boy_id: null, // Default if not provided
-      payment_status: 'done'
+      payment_status: 'pending'
     });
 
     // Construct response
@@ -195,24 +197,27 @@ exports.getOrderDetailsByMobile = async (req, res) => {
 // Initialize Payment
 exports.initiatePayment = async (req, res) => {
   const { orderId, amount, mobileNumber } = req.body;
-
+  const merchantTransactionId = `ORDER_${orderId}_${Date.now()}`
   const paymentData = {
     merchantId: MERCHANT_ID,
-    merchantTransactionId: `ORDER_${orderId}_${Date.now()}`,  // Unique transaction ID
-    merchantUserId: mobileNumber,
+    merchantTransactionId: merchantTransactionId,  // Unique transaction ID
+    merchantUserId: `MUID${mobileNumber}`,
     amount: amount * 100,  // Convert to paise
-    // redirectUrl: CALLBACK_URL,
-    // callbackUrl: CALLBACK_URL,
+    redirectUrl: CALLBACK_URL + `${merchantTransactionId}`,
+    redirectMode: "REDIRECT",
     paymentInstrument: {
       type: 'PAY_PAGE',
     }
   };
 
   const requestBody = JSON.stringify(paymentData);
-  const hash = generateHash(requestBody);
+  const bufferObj = Buffer.from(requestBody,"utf8")
+  const base64Payload = bufferObj.toString("base64")
+  const concatenatedString = base64Payload + "/pg/v1/pay" + saltKey;
+  const hash = cryptoJS.SHA256(concatenatedString);
 
   try {
-    const response = await axios.post(`${PHONEPE_BASE_URL}/pg/v1/pay`, paymentData, {
+    const response = await axios.post(`${PHONEPE_BASE_URL}/pg/v1/pay`, { request: base64Payload }, {
       headers: {
         'Content-Type': 'application/json',
         'X-VERIFY': `${hash}###${process.env.PHONEPE_SALT_KEY_INDEX}`
@@ -222,7 +227,7 @@ exports.initiatePayment = async (req, res) => {
     if (response.data.success) {
       return res.status(200).json({
         message: 'Payment initiated successfully',
-        data: response.data.data.instrumentResponse.redirectUrl
+        data: { "url" : response.data.data.instrumentResponse.redirectInfo.url }
       });
     } else {
       return res.status(400).json({ message: 'Payment initiation failed', data: response.data });
@@ -235,19 +240,81 @@ exports.initiatePayment = async (req, res) => {
 
 // Check Payment Status
 exports.checkPaymentStatus = async (req, res) => {
-  const { transactionId, paymentId } = req.body;
-
-  const hash = generateHash(transactionId);
+  const { merchantTransactionId } = req.body;
+  
+  const hash = cryptoJS.SHA256(`/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}` + saltKey)
 
   try {
-    const response = await axios.get(`${PHONEPE_BASE_URL}/pg/v1/status/${MERCHANT_ID}/${transactionId}`, {
+    const response = await axios.get(`${PHONEPE_BASE_URL}/pg/v1/status/${MERCHANT_ID}/${merchantTransactionId}`, {
       headers: {
         'Content-Type': 'application/json',
-        'X-VERIFY': `${hash}###${process.env.PHONEPE_SALT_KEY_INDEX}`
+        'X-VERIFY': `${hash}###${process.env.PHONEPE_SALT_KEY_INDEX}`,
+        'X-MERCHANT-ID': merchantTransactionId
       }
     });
 
-    return res.status(200).json({ message: 'Payment status retrieved', data: response.data });
+    const order_id = merchantTransactionId.split("_")[1];
+
+    if(response.data.code == "PAYMENT_SUCCESS"){
+      const payment = await Payment.create({
+        order_id: order_id,
+        payment_id: response.data.data.transactionId,
+        merchantTransactionId: merchantTransactionId,
+        status: "Successful", // "success" or any other status based on payment
+        amount: response.data.data.amount,
+      });
+
+      await Order.update({ payment_status: 'done' },{
+          where: {
+            id: order_id,
+          },
+        });
+      
+      return res.status(200).json({message: 'Payment successfull',data: payment,});
+    }else if(response.data.code == "PAYMENT_SUCCESS"){
+      const payment = await Payment.create({
+        order_id: order_id,
+        payment_id: response.data.data.transactionId,
+        merchantTransactionId: merchantTransactionId,
+        status: "Successful", // "success" or any other status based on payment
+        amount: response.data.data.amount,
+      });
+
+      await Order.update({ payment_status: 'done' },{
+          where: {
+            id: order_id,
+          },
+        });
+      
+      return res.status(200).json({message: 'Payment successfull',data: payment,});
+    }if(response.data.code == "PAYMENT_SUCCESS"){
+      const payment = await Payment.create({
+        order_id: order_id,
+        payment_id: response.data.data.transactionId,
+        merchantTransactionId: merchantTransactionId,
+        status: "Successful", // "success" or any other status based on payment
+        amount: response.data.data.amount,
+      });
+
+      await Order.update({ payment_status: 'done' },{
+          where: {
+            id: order_id,
+          },
+        });
+      
+      return res.status(200).json({message: 'Payment successfull',data: payment,});
+    }else
+    {
+      const payment = await Payment.create({
+        order_id: order_id,
+        payment_id: response.data.data.transactionId,
+        merchantTransactionId: merchantTransactionId,
+        status: "Fail", // "success" or any other status based on payment
+        amount: response.data.data.amount/100,
+      });
+      
+      return res.status(200).json({message: 'Payment Failed',data: payment,});
+    }
   } catch (error) {
     console.error('Payment status check error:', error);
     return res.status(500).json({ error: 'Payment status check failed' });
