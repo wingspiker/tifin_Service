@@ -33,7 +33,7 @@ exports.addMenus = async (req, res) => {
   try {
     const createdMenus = await Promise.all(
       menus.map(async (menuData) => {
-        const { date, isPublished, shift, variant, description, menu_items, price, status } = menuData;
+        const { date, isPublished, shift, variant, description, menu_items, price, status, photo_url } = menuData;
         return await Menu.create({
           date,
           isPublished,
