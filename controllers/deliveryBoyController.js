@@ -1,6 +1,10 @@
 const DeliveryBoy = require('../models/delivery_boy');
+const Order = require('../models/order');
+const Menu = require('../models/menu');
+const Address = require('../models/address');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 
 // Login delivery boy
 exports.loginDeliveryBoy = async (req, res) => {
@@ -42,13 +46,17 @@ exports.loginDeliveryBoy = async (req, res) => {
 
 exports.getAssignedOrders = async (req, res) => {
   const { date, shift, status } = req.query;
-  const { delivery_boy_id } = req.params;
+  const { mobileNumber } = req.params;
 
   try {
+
+    const deliveryBoy = await DeliveryBoy.findOne({where: { mobile_no : mobileNumber}})
+    let reqDate = new Date(date);
+
     // Build the query conditions
     const whereConditions = {
-      delivery_boy_id,
-      date,
+      delivery_boy_id : deliveryBoy.id,
+      deliveryDate: reqDate,
       shift,
       payment_status: 'done',
       ...(status && { status }) // Only add status condition if it’s provided
@@ -56,18 +64,36 @@ exports.getAssignedOrders = async (req, res) => {
 
     // Query to fetch assigned orders with related details
     const orders = await Order.findAll({
-      where: whereConditions,
-      include: [
-        {
-          model: Menu,
-          attributes: ['id', 'date', 'isPublished', 'shift', 'variant', 'description', 'menu_items', 'price', 'status'],
-        },
-        {
-          model: Address,
-          attributes: ['id', 'address', 'zipcode', 'shortname'],
-        }
-      ]
+      where: whereConditions
     });
+
+    const orderDetailsPromises = orders.map(async (order) => {
+      const address = await Address.findOne({ where: { id: order.address_id } });
+
+      const menuItems = await Promise.all(order.menus.map(async (menu) => {
+        const menuItem = await Menu.findOne({ where: { id: menu.menu_id } });
+        return {
+          ...menuItem.toJSON(),
+          quantity: menu.quantity,
+          itemTotal: menuItem.price * menu.quantity
+        };
+      }));
+
+      const totalAmount = menuItems.reduce((sum, item) => sum + item.itemTotal, 0);
+
+      return {
+        id: order.id,
+        address,
+        mobile_no: order.mobile_no,
+        orderDate: order.createdAt,
+        status: order.status,
+        shift: order.shift,
+        menus: menuItems,
+        totalAmount
+      };
+    });
+
+    const detailedOrders = await Promise.all(orderDetailsPromises);
 
     // Check if no orders found
     if (orders.length === 0) {
@@ -77,7 +103,7 @@ exports.getAssignedOrders = async (req, res) => {
     // Return orders with detailed information
     return res.status(200).json({
       message: 'Assigned orders retrieved successfully',
-      data: orders,
+      data: detailedOrders,
     });
   } catch (error) {
     console.error(error);
