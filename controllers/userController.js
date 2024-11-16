@@ -77,7 +77,7 @@ exports.addOrder = async (req, res) => {
       }
 
       if(deliveryDate == ""){
-        deliveryDate = new Date(menuItem.date);
+        deliveryDate = menuItem.date;
       }else if(deliveryDate != menuItem.date){
         throw new Error("All added menu should be belongs to same date.")
       }
