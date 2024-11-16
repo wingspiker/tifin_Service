@@ -8,8 +8,9 @@ const Media = require('../models/media');
 
 // Associations
 Order.belongsTo(Address, { foreignKey: 'address_id' });
-Order.belongsTo(DeliveryBoy, { foreignKey: 'delivery_boy_id' });
 Payment.belongsTo(Order, { foreignKey: 'order_id' });
+DeliveryBoy.hasMany(Order, { foreignKey: 'delivery_boy_id' });
+Order.belongsTo(DeliveryBoy, { foreignKey: 'delivery_boy_id', as: 'deliveryBoy' });
 
 // sequelize.sync({ force: true })  // Use 'force: true' only in development to recreate tables if needed
 //   .then(() => {

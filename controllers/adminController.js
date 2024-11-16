@@ -287,7 +287,14 @@ exports.getOrdersByDateAndShift = async (req, res) => {
           payment_status: 'done'
         },
         limit,                          // Limit number of records per page
-        offset: (page - 1) * limit      // Calculate offset for pagination
+        offset: (page - 1) * limit,
+        include: [
+          {
+            model: DeliveryBoy,
+            as: 'deliveryBoy',           // Ensure this alias matches the one used in the association
+            attributes: ['id', 'fullName', 'mobile_no'], // Fetch only the required fields
+          }
+        ]      // Calculate offset for pagination
       };
 
     }else{
@@ -307,7 +314,14 @@ exports.getOrdersByDateAndShift = async (req, res) => {
           payment_status: 'done'
         },
         limit,                          // Limit number of records per page
-        offset: (page - 1) * limit      // Calculate offset for pagination
+        offset: (page - 1) * limit ,
+        include: [
+          {
+            model: DeliveryBoy,
+            as: 'deliveryBoy',           // Ensure this alias matches the one used in the association
+            attributes: ['id', 'fullName', 'mobile_no'], // Fetch only the required fields
+          }
+        ]      // Calculate offset for pagination
       };
     }
     
@@ -349,8 +363,10 @@ exports.getOrdersByDateAndShift = async (req, res) => {
         address,
         mobile_no: order.mobile_no,
         orderDate: order.createdAt,
+        deliveryDate: order.deliveryDate,
         status: order.status,
         shift: order.shift,
+        deliveryBoy: order.deliveryBoy,
         menus: menuItems,
         totalAmount
       };
