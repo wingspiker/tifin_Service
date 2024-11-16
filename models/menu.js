@@ -19,7 +19,7 @@ const Menu = sequelize.define('Menu', {
     allowNull: true,
   },
   variant: {
-    type: DataTypes.ENUM('Full-Dish', 'Half-Dish'),
+    type: DataTypes.STRING,
     allowNull: false,
   },
   description: {

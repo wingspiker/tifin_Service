@@ -25,10 +25,6 @@ const validateMenu = [
     .isIn(['Lunch', 'Dinner'])
     .withMessage('Shift must be either lunch or dinner'),
 
-  body('*.variant')
-    .isIn(['Full-Dish', 'Half-Dish'])
-    .withMessage('Variant must be either full-dish or half-dish'),
-
   body('*.description').isString().optional(),
 
   body('*.menu_items').isArray().withMessage('menu_items must be an array'),
@@ -56,7 +52,6 @@ const validateEditMenu = [
   }),
   body('isPublished').optional().isBoolean().withMessage('isPublished must be a boolean'),
   body('shift').optional().isIn(['Lunch', 'Dinner']).withMessage('Shift must be either lunch or dinner'),
-  body('variant').optional().isIn(['Full-Dish', 'Half-Dish']).withMessage('Variant must be either full-dish or half-dish'),
   body('description').optional().isString(),
   body('menu_items').optional().isArray().withMessage('menu_items must be an array'),
   body('price').optional().isFloat().withMessage('Price must be a float'),
