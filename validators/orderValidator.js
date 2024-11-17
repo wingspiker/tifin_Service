@@ -116,7 +116,7 @@ exports.validateOrderStatusUpdate = [
     .withMessage('orderId must be an integer'),
 
   check('status')
-    .isIn(['out_for_delivery', 'done'])
+    .isIn(['outForDelivery', 'done'])
     .withMessage('Invalid status value'),
 
   (req, res, next) => {
