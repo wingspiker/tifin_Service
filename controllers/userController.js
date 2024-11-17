@@ -67,6 +67,12 @@ exports.addOrder = async (req, res) => {
       if (!menuItem) {
         throw new Error(`Menu item with ID ${menu.menu_id} not found or not published.`);
       }
+
+      menu.price = menuItem.price;
+      menu.variant = menuItem.variant;
+      menu.description = menuItem.description;
+      menu.menuItems = menuItem.menu_items.join(" ")
+
       const itemTotal = menuItem.price * menu.quantity; // Calculate total for this menu item
       totalAmount += itemTotal; // Add to total amount
 
@@ -83,7 +89,17 @@ exports.addOrder = async (req, res) => {
       }
 
       return {
-        ...menuItem.toJSON(),
+        id: menuItem.id,
+        date: menuItem.date,
+        photo_url:menuItem.photo_url,
+        isPublished:menuItem.isPublished,
+        shift: menuItem.shift,
+        status:menuItem.status,
+        price: menu.price,
+        description:menu.description,
+        variant:menu.variant,
+        menuItem:menu.menuItems,
+        quantity: menu.quantity, // Calculate total for this menu item,
         itemTotal, // Total price for this menu item
       };
     });
@@ -158,10 +174,19 @@ exports.getOrderDetailsByMobile = async (req, res) => {
       // Get the associated menu items for the order
       const menuItems = await Promise.all(order.menus.map(async (menu) => {
         const menuItem = await Menu.findOne({ where: { id: menu.menu_id } });
-        return {
-          ...menuItem.toJSON(), // Include all properties from menuItem
+        return {// Include all properties from menuItem
+          id: menuItem.id,
+          date: menuItem.date,
+          photo_url:menuItem.photo_url,
+          isPublished:menuItem.isPublished,
+          shift: menuItem.shift,
+          status:menuItem.status,
+          price: menu.price,
+          description:menu.description,
+          variant:menu.variant,
+          menuItem:menu.menuItems,
           quantity: menu.quantity, // Include the quantity from the order
-          itemTotal: menuItem.price * menu.quantity // Calculate total for this menu item
+          itemTotal: menu.price * menu.quantity // Calculate total for this menu item
         };
       }));
 

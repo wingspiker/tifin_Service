@@ -73,9 +73,18 @@ exports.getAssignedOrders = async (req, res) => {
       const menuItems = await Promise.all(order.menus.map(async (menu) => {
         const menuItem = await Menu.findOne({ where: { id: menu.menu_id } });
         return {
-          ...menuItem.toJSON(),
-          quantity: menu.quantity,
-          itemTotal: menuItem.price * menu.quantity
+          id: menuItem.id,
+          date: menuItem.date,
+          photo_url:menuItem.photo_url,
+          isPublished:menuItem.isPublished,
+          shift: menuItem.shift,
+          status:menuItem.status,
+          price: menu.price,
+          description:menu.description,
+          variant:menu.variant,
+          menuItem:menu.menuItems,
+          quantity: menu.quantity, // Include the quantity from the order
+          itemTotal: menu.price * menu.quantity // Calculate total for this menu item
         };
       }));
 
