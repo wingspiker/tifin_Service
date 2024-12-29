@@ -5,6 +5,7 @@ const deliveryBoyRoutes = require('./routes/deliveryBoyRoutes');
 const userRoutes = require('./routes/userRoutes');
 const path = require("path");
 const cors = require('cors');
+const { sendEmail } = require('./controllers/emailController');
 require('./config/index');  // Initialize database connection
 require('./config/db');
 
@@ -17,5 +18,6 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use('/api/admin', adminRoutes);
 app.use('/api/deliveryboy', deliveryBoyRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/send-email', sendEmail);
 
 module.exports = app;
