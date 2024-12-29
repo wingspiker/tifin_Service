@@ -29,5 +29,8 @@
   "devDependencies": {
     "eslint": "^9.13.0",
     "nodemon": "^3.1.7"
+  },
+  "engines": {
+    "node": "14.x"
   }
 }
