@@ -274,45 +274,13 @@ exports.checkPaymentStatus = async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'X-VERIFY': `${hash}###${process.env.PHONEPE_SALT_KEY_INDEX}`,
-        'X-MERCHANT-ID': merchantTransactionId
+        'X-MERCHANT-ID': MERCHANT_ID
       }
     });
 
     const order_id = merchantTransactionId.split("_")[1];
 
     if(response.data.code == "PAYMENT_SUCCESS"){
-      const payment = await Payment.create({
-        order_id: order_id,
-        payment_id: response.data.data.transactionId,
-        merchantTransactionId: merchantTransactionId,
-        status: "Successful", // "success" or any other status based on payment
-        amount: response.data.data.amount,
-      });
-
-      await Order.update({ payment_status: 'done' },{
-          where: {
-            id: order_id,
-          },
-        });
-      
-      return res.status(200).json({message: 'Payment successfull',data: payment,});
-    }else if(response.data.code == "PAYMENT_SUCCESS"){
-      const payment = await Payment.create({
-        order_id: order_id,
-        payment_id: response.data.data.transactionId,
-        merchantTransactionId: merchantTransactionId,
-        status: "Successful", // "success" or any other status based on payment
-        amount: response.data.data.amount,
-      });
-
-      await Order.update({ payment_status: 'done' },{
-          where: {
-            id: order_id,
-          },
-        });
-      
-      return res.status(200).json({message: 'Payment successfull',data: payment,});
-    }if(response.data.code == "PAYMENT_SUCCESS"){
       const payment = await Payment.create({
         order_id: order_id,
         payment_id: response.data.data.transactionId,
