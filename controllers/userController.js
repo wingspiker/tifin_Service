@@ -322,7 +322,7 @@ exports.uploadImage = async (req, res) => {
     }
 
     // Construct the file URL
-    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    const fileUrl = req.file.path;
 
     // Save file URL in Media table
     const media = await Media.create({ file_url: fileUrl });
