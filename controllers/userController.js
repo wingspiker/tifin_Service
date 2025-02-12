@@ -6,8 +6,11 @@ const axios = require('axios');
 const Media = require("../models/media");
 const { Op } = require('sequelize');
 const cryptoJS = require('crypto-js');
+const TelegramService = require('../services/telegramService');
 
 require('dotenv').config();
+
+const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN, process.env.TELEGRAM_CHAT_ID);
 
 const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL;
 const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
@@ -294,6 +297,10 @@ exports.checkPaymentStatus = async (req, res) => {
             id: order_id,
           },
         });
+      
+      // Send notification to telegram
+      const order = await Order.findOne({ where: { id: order_id } });
+      await telegramService.sendOrderNotification(order);
       
       return res.status(200).json({message: 'Payment successfull',data: payment,});
     }else
