@@ -377,7 +377,8 @@ exports.getOrdersByDateAndShift = async (req, res) => {
         shift: order.shift,
         deliveryBoy: order.deliveryBoy,
         menus: menuItems,
-        totalAmount
+        totalAmount,
+        note: order.note
       };
     });
 
