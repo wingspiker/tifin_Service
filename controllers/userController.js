@@ -289,7 +289,7 @@ exports.checkPaymentStatus = async (req, res) => {
         payment_id: response.data.data.transactionId,
         merchantTransactionId: merchantTransactionId,
         status: "Successful", // "success" or any other status based on payment
-        amount: response.data.data.amount,
+        amount: response.data.data.amount/100,
       });
 
       await Order.update({ payment_status: 'done' },{
