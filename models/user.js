@@ -1,44 +1,46 @@
-const {DataTypes} =  require('sequelize');
-const sequelize = require('../config/index');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/index");
 
-
-const user = sequelize.define('User',{
+const User = sequelize.define(
+  "User",
+  {
     id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    firstname: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    lastname: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    mobile_no: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isNumeric: true,
+        len: [10, 15], //Adjust length as needed
       },
-    firstname : {
-        type : DataTypes.STRING,
-        allowNull : false
     },
-    lastname : {
-        type : DataTypes.STRING,
-        allowNull : false
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true,
+      },
     },
-    mobile_no : {
-        type : DataTypes.STRING,
-        allowNull : false ,
-        validate : {
-            isNumeric : true,
-            len : [10,15] //Adjust length as needed
-        },
-    } ,
-    email : {
-        type : DataTypes.STRING,
-        allowNull : false , 
-        unique : true ,
-        validate : {
-            isEmail : true,
-        },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
-    password : {
-        type : DataTypes.STRING,
-        allowNull : false,
-    },
-},{
-    timestamps: true,  // Enables created_at and updated_at
-})
+  },
+  {
+    timestamps: true, // Enables created_at and updated_at
+  }
+);
 
-module.exports = user ;
-
+module.exports = User;
