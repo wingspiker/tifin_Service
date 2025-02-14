@@ -7,6 +7,10 @@ const Media = require("../models/media");
 const { Op } = require('sequelize');
 const cryptoJS = require('crypto-js');
 const TelegramService = require('../services/telegramService');
+const User = require('../models/user') // import user model for signup and login
+const bcryptjs = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
 
 require('dotenv').config();
 
@@ -16,6 +20,9 @@ const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL;
 const MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
 const CALLBACK_URL = process.env.CALLBACK_URL;
 const saltKey = process.env.PHONEPE_SALT_KEY;
+
+//JWT tokens for the signup and login
+const SECRET_KEY = process.env.JWT_SECRET;
 
 // Get menus for current, next, and next to next date
 exports.getMenus = async (req, res) => {
@@ -355,4 +362,90 @@ exports.getAllMedia = async (req, res) => {
     console.error(error);
     return res.status(500).json({ message: "Failed to retrieve media records" });
   }
+};
+
+
+
+//Signup page for the user
+
+exports.signup = async(req,res) => {
+  try {
+    const {firstname , lastname , mobile_no , email  , password} = req.body ;
+
+    if(!firstname , !lastname , !mobile_no , !email , !password) {
+      return res.status(400).json({message : "All fields are required"});
+    }
+
+    const existingUser = await User.findOne({where : {email} });
+    if(existingUser){
+      return res.status(400).json({message : "User already exists"});
+    }
+
+    const hashedPassword  = await bcryptjs.hash(password , 10);
+
+    const newUser = await User.create({
+      firstname,
+      lastname,
+      mobile_no,
+      email,
+      password : hashedPassword,
+    });
+
+
+    const token = jwt.sign({id : newUser.id , email : newUser.email } , SECRET_KEY , {
+      expiresIn : "2h",
+    } );
+
+    res.status(201).json({
+      message : "User created successfully",
+      token,
+    });
+    
+  } catch (error) {
+
+    console.error("Signup error:" , error.message); //Log error for the debugging
+    res.status(500).json({message : "Internal server error"});
+    
+  }
+}
+
+
+//login page for user
+
+exports.login = async(req,res) => {
+
+  try {
+
+    const {email , password} = req.body ; 
+
+    if(!email || !password ) {
+      return res.status(400).json({message : "email and password are required"});
+    }
+
+    const user = await User.findOne({where : {email} } );
+
+    if(!user){
+      return res.status(400).json({message : "invalid email or password"});
+    }
+
+    const isMatch = await bcryptjs.compare(password, user.password);
+    if(!isMatch) {
+      return res.status(400).json({message : "Invalid email or password"});
+    }
+
+    const token = jwt.sign({id : user.id , email : user.email }, SECRET_KEY, {
+
+      expiresIn : "2h",
+
+          });
+
+          res.status(200).json({message : "Login successfully"});
+
+    
+  } catch (error) {
+    console.error("Login error : ",error.message) // Login for the error debugging
+    res.status(500).json("Internal server error");
+    
+  }
+
 };

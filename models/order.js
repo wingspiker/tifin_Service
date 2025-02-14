@@ -2,12 +2,21 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/index');
 const Address = require('./address');
 const DeliveryBoy = require('./delivery_boy');
+const user = require('./user');
 
 const Order = sequelize.define('Order', {
   address_id: {
     type: DataTypes.INTEGER,
     references: {
       model: Address,
+      key: 'id',
+    },
+    allowNull: false,
+  },
+  user_id: {
+    type: DataTypes.INTEGER,
+    references: {
+      model : user,
       key: 'id',
     },
     allowNull: false,
@@ -28,10 +37,6 @@ const Order = sequelize.define('Order', {
   },
   deliveryDate: {
     type: DataTypes.DATE,
-    allowNull: false,
-  },
-  mobile_no: {
-    type: DataTypes.STRING,
     allowNull: false,
   },
   menus: {
